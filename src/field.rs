@@ -1,6 +1,5 @@
 use rand::rngs::ThreadRng;
 use rand::Rng;
-use std::io::Write;
 
 mod tile;
 use tile::Tile;
