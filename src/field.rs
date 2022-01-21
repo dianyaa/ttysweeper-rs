@@ -9,29 +9,26 @@ pub struct Field {
     width: usize,
     num_mines: usize,
     minefield: Vec<Vec<tile::Tile>>,
-    is_initialized: bool,
 }
 
 impl Field {
     pub fn new(height: usize, width: usize, num_mines: usize) -> Self {
-        Self {
+        let mut ret = Self {
             height,
             width,
             num_mines,
             minefield: Vec::new(),
-            is_initialized: false,
-        }
-    }
+        };
 
-    pub fn initialize(&mut self) {
-        for i in 0..self.height {
-            self.minefield.push(Vec::new());
-            for j in 0..self.width {
-                self.minefield[i].push(tile::Tile::new(false, j, i));
+        for i in 0..ret.height {
+            ret.minefield.push(Vec::new());
+            for j in 0..ret.width {
+                ret.minefield[i].push(tile::Tile::new(false, j, i));
             }
         }
 
-        self.reset();
+        ret.reset();
+        ret
     }
 
     pub fn reset(&mut self) {
