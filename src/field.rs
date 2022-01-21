@@ -23,7 +23,7 @@ impl Field {
         }
     }
 
-    pub fn initialize(&mut self) -> () {
+    pub fn initialize(&mut self) {
         for i in 0..self.height {
             self.minefield.push(Vec::new());
             for j in 0..self.width {
@@ -34,7 +34,7 @@ impl Field {
         self.reset();
     }
 
-    pub fn reset(&mut self) -> () {
+    pub fn reset(&mut self) {
         let mut rng: ThreadRng = rand::thread_rng();
         let mut minecount: usize = self.num_mines;
         while minecount > 0 {
@@ -49,7 +49,7 @@ impl Field {
         self.calculate_tile_counts();
     }
 
-    pub fn print_field(&self) -> () {
+    pub fn print_field(&self) {
         for row in &self.minefield {
             for tle in row {
                 print!("[");
@@ -66,7 +66,7 @@ impl Field {
         }
     }
 
-    pub fn highlight_print_field(&self, target_tile: tile::Tile) -> () {
+    pub fn highlight_print_field(&self, target_tile: tile::Tile) {
         for row in &self.minefield {
             for tle in row {
                 let is_target: bool = tle.x == target_tile.x && tle.y == target_tile.y;
@@ -92,7 +92,7 @@ impl Field {
         }
     }
 
-    pub fn reveal_tile(&mut self, y: usize, x: usize) -> () {
+    pub fn reveal_tile(&mut self, y: usize, x: usize) {
         if y >= self.height || x >= self.width {
             return;
         }
