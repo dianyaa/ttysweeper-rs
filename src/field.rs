@@ -1,14 +1,15 @@
-mod tile;
-
 use rand::rngs::ThreadRng;
 use rand::Rng;
 use std::io::Write;
+
+mod tile;
+use tile::Tile;
 
 pub struct Field {
     height: usize,
     width: usize,
     num_mines: usize,
-    minefield: Vec<Vec<tile::Tile>>,
+    minefield: Vec<Vec<Tile>>,
 }
 
 impl Field {
@@ -63,7 +64,7 @@ impl Field {
         }
     }
 
-    pub fn highlight_print_field(&self, target_tile: &tile::Tile) {
+    pub fn highlight_print_field(&self, target_tile: &Tile) {
         for row in &self.minefield {
             for tle in row {
                 let is_target: bool = tle.x == target_tile.x && tle.y == target_tile.y;
@@ -132,11 +133,11 @@ impl Field {
         }
     }
 
-    fn mut_tile_at(&mut self, x: usize, y: usize) -> &mut tile::Tile {
+    fn mut_tile_at(&mut self, x: usize, y: usize) -> &mut Tile {
         &mut self.minefield[y][x]
     }
 
-    fn tile_at(&self, x: usize, y: usize) -> &tile::Tile {
+    fn tile_at(&self, x: usize, y: usize) -> &Tile {
         &self.minefield[y][x]
     }
 }
