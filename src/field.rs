@@ -66,7 +66,7 @@ impl Field {
         }
     }
 
-    pub fn highlight_print_field(&self, target_tile: tile::Tile) {
+    pub fn highlight_print_field(&self, target_tile: &tile::Tile) {
         for row in &self.minefield {
             for tle in row {
                 let is_target: bool = tle.x == target_tile.x && tle.y == target_tile.y;
@@ -104,7 +104,7 @@ impl Field {
         let height = self.height;
         for i in 0..self.width {
             for j in 0..self.height {
-                let tle = self.tile_at(j, i);
+                let tle = *self.tile_at(j, i);
                 if tle.has_mine {
                     self.mut_tile_at(j, i).neighbor_mines = -2;
                     continue;
@@ -126,7 +126,7 @@ impl Field {
                             self.mut_tile_at(tle.x as usize, tle.y as usize)
                                 .neighbor_mines += 1;
                         }
-                        self.highlight_print_field(tle);
+                        self.highlight_print_field(&tle);
                         println!();
                         std::io::stdout().flush();
                     }
@@ -139,7 +139,7 @@ impl Field {
         &mut self.minefield[y][x]
     }
 
-    fn tile_at(&self, x: usize, y: usize) -> tile::Tile {
-        self.minefield[y][x]
+    fn tile_at(&self, x: usize, y: usize) -> &tile::Tile {
+        &self.minefield[y][x]
     }
 }
