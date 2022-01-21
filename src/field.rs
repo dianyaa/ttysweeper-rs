@@ -128,7 +128,7 @@ impl Field {
                         }
                         self.highlight_print_field(&tle);
                         println!();
-                        std::io::stdout().flush();
+                        std::io::stdout().flush().expect("Flushing stdout");
                     }
                 }
             }
