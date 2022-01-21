@@ -14,20 +14,21 @@ pub struct Field {
 
 impl Field {
     pub fn new(height: usize, width: usize, num_mines: usize) -> Self {
+        let mut minefield = Vec::with_capacity(height);
+        for row_num in 0..height {
+            let mut row = Vec::with_capacity(width);
+            for col_num in 0..width {
+                row.push(Tile::new(false, col_num, row_num));
+            }
+            minefield.push(row);
+        }
+
         let mut ret = Self {
             height,
             width,
             num_mines,
-            minefield: Vec::new(),
+            minefield,
         };
-
-        for i in 0..ret.height {
-            ret.minefield.push(Vec::new());
-            for j in 0..ret.width {
-                ret.minefield[i].push(tile::Tile::new(false, j, i));
-            }
-        }
-
         ret.reset();
         ret
     }
