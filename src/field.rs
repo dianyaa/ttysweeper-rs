@@ -35,14 +35,14 @@ impl Field {
 
     pub fn reset(&mut self) {
         let mut rng: ThreadRng = rand::thread_rng();
-        let mut minecount: usize = self.num_mines;
-        while minecount > 0 {
+        let mut mine_count: usize = self.num_mines;
+        while mine_count > 0 {
             let (x, y) = (rng.gen_range(0..self.width), rng.gen_range(0..self.height));
             if self.minefield[y][x].has_mine {
                 continue;
             }
             self.minefield[y][x].has_mine = true;
-            minecount -= 1;
+            mine_count -= 1;
         }
 
         self.calculate_tile_counts();
