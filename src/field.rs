@@ -18,7 +18,7 @@ impl Field {
         for row_num in 0..height {
             let mut row = Vec::with_capacity(width);
             for col_num in 0..width {
-                row.push(Tile::new(false, col_num, row_num));
+                row.push(Tile::new_non_mine(col_num, row_num, 0));
             }
             minefield.push(row);
         }
@@ -38,14 +38,14 @@ impl Field {
         let mut mine_count: usize = self.num_mines;
         while mine_count > 0 {
             let (x, y) = (rng.gen_range(0..self.width), rng.gen_range(0..self.height));
-            if self.tile_at(x, y).has_mine {
+            if self.tile_at(x, y).has_mine() {
                 continue;
             }
-            self.mut_tile_at(x, y).has_mine = true;
+            self.mut_tile_at(x, y).place_mine_at();
             mine_count -= 1;
         }
 
-        self.calculate_tile_counts();
+        self.update_tile_counts();
     }
 
     pub fn print_field(&self) {
@@ -86,47 +86,48 @@ impl Field {
         todo!();
     }
 
-    fn calculate_tile_counts(&mut self) {
-        let width = self.width;
-        let height = self.height;
-        for i in 0..self.width {
-            for j in 0..self.height {
-                let tle = *self.tile_at(j, i);
-                if tle.has_mine {
-                    self.mut_tile_at(j, i).neighbor_mines = -2;
+    fn count_neighbor_mines(&self, tile_x: usize, tile_y: usize) -> u8 {
+        let mut count = 0;
+        for neighbor_x in (tile_x - 1)..(tile_y + 1) {
+            for neighbor_y in (tile_y - 1)..=(tile_y + 1) {
+                // don't count self
+                if (neighbor_x, neighbor_y) == (tile_x, tile_y) {
                     continue;
                 }
-                for k in -1..=1 {
-                    for l in -1..=1 {
-                        if k == 0 && l == 0 {
-                            continue;
-                        }
-                        let (mut x, mut y) = (tle.x as i32, tle.y as i32);
-                        x += k;
-                        y += l;
-
-                        if x < 0 || x >= width as i32 || y < 0 || y >= height as i32 {
-                            continue;
-                        }
-
-                        if self.tile_at(x as usize, y as usize).has_mine {
-                            self.mut_tile_at(tle.x as usize, tle.y as usize)
-                                .neighbor_mines += 1;
-                        }
-                        self.highlight_print_field(&tle);
-                        println!();
-                        std::io::stdout().flush().expect("Flushing stdout");
-                    }
+                if self
+                    .try_tile_at(neighbor_x, neighbor_y)
+                    .map(|neighbor| neighbor.has_mine())
+                    .unwrap_or(false)
+                {
+                    count += 1;
+                }
+            }
+        }
+        count
+    }
+    fn update_tile_counts(&mut self) {
+        for x in 0..self.width {
+            for y in 0..self.height {
+                // FIXME: the borrow checker doesn't like us calling count_neighbor_mines inside the if statement, so we inefficiently calculate it for all tiles.
+                let count = self.count_neighbor_mines(x, y);
+                if let Some(neighbor_mines) = self.minefield[y][x].try_mut_neighbor_mines() {
+                    *neighbor_mines = count;
                 }
             }
         }
     }
 
-    fn mut_tile_at(&mut self, x: usize, y: usize) -> &mut Tile {
-        &mut self.minefield[y][x]
+    fn try_tile_at(&self, x: usize, y: usize) -> Option<&Tile> {
+        self.minefield.get(y).and_then(|row| row.get(x))
+    }
+    fn try_mut_tile_at(&mut self, x: usize, y: usize) -> Option<&mut Tile> {
+        self.minefield.get_mut(y).and_then(|row| row.get_mut(x))
     }
 
+    fn mut_tile_at(&mut self, x: usize, y: usize) -> &mut Tile {
+        self.try_mut_tile_at(x, y).expect("Tile out of range")
+    }
     fn tile_at(&self, x: usize, y: usize) -> &Tile {
-        &self.minefield[y][x]
+        self.try_tile_at(x, y).expect("Tile out of range")
     }
 }
