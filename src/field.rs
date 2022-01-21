@@ -38,10 +38,10 @@ impl Field {
         let mut mine_count: usize = self.num_mines;
         while mine_count > 0 {
             let (x, y) = (rng.gen_range(0..self.width), rng.gen_range(0..self.height));
-            if self.minefield[y][x].has_mine {
+            if self.tile_at(x, y).has_mine {
                 continue;
             }
-            self.minefield[y][x].has_mine = true;
+            self.mut_tile_at(x, y).has_mine = true;
             mine_count -= 1;
         }
 
