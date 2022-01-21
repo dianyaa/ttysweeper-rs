@@ -1,120 +1,125 @@
-mod tile;
+use crate::util::Position;
 
-use std::io::Write;
-use rand::Rng;
-use rand::rngs::ThreadRng;
+mod tile;
+use tile::Tile;
 
 pub struct Field {
     height: usize,
     width: usize,
     num_mines: usize,
-    minefield: Vec<Vec<tile::Tile>>,
-    is_initialized: bool,
+    minefield: Vec<Vec<Tile>>,
 }
 
 impl Field {
     pub fn new(height: usize, width: usize, num_mines: usize) -> Self {
-        Field { height, width, num_mines, minefield: Vec::new(), is_initialized: false }
-    }
-
-    pub fn initialize(&mut self) -> () {
-        for i in 0..self.height {
-            self.minefield.push(Vec::new());
-            for j in 0..self.width {
-                self.minefield[i].push(tile::Tile::new(false, j, i));
+        let mut minefield = Vec::with_capacity(height);
+        for row_num in 0..height {
+            let mut row = Vec::with_capacity(width);
+            for col_num in 0..width {
+                row.push(Tile::new_non_mine(
+                    Position::from_row_col(row_num, col_num),
+                    0,
+                ));
             }
+            minefield.push(row);
         }
 
-        self.reset();
+        let mut ret = Self {
+            height,
+            width,
+            num_mines,
+            minefield,
+        };
+        ret.reset();
+        ret
     }
 
-    pub fn reset(&mut self) -> () {
-        let mut rng: ThreadRng = rand::thread_rng();
-        let mut minecount: usize = self.num_mines;
-        while minecount > 0 {
-            let (x, y) = (rng.gen_range(0..self.width), rng.gen_range(0..self.height));
-            if self.minefield[y][x].has_mine { continue; }
-            self.minefield[y][x].has_mine = true;
-            minecount -= 1;
+    pub fn reset(&mut self) {
+        let mut mine_count: usize = self.num_mines;
+        while mine_count > 0 {
+            let pos = Position::random(self.width, self.height);
+            if self.tile_at(pos).has_mine() {
+                continue;
+            }
+            self.mut_tile_at(pos).place_mine_at();
+            mine_count -= 1;
         }
 
-        self.calculate_tile_counts();
+        self.update_tile_counts();
     }
 
-    pub fn print_field(& self) -> () {
+    pub fn print_field(&self) {
         for row in &self.minefield {
             for tle in row {
-                print!("[");
-
-                match tle.neighbor_mines {
-                    -2 => print!("*"),
-                    0 => print!(" "),
-                    _ => print!("{}", tle.neighbor_mines)
-                }
-
-                print!("]");
+                print!("[{}]", tle);
             }
             println!();
         }
     }
 
-    pub fn highlight_print_field(& self, target_tile: tile::Tile) -> () {
+    pub fn highlight_print_field(&self, target_tile: &Tile) {
         for row in &self.minefield {
             for tle in row {
-                let is_target: bool = tle.x == target_tile.x && tle.y == target_tile.y;
-                if is_target { print!("{{"); }
-                else { print!("["); }
-
-                match tle.neighbor_mines {
-                    -2 => print!("*"),
-                    0 => print!(" "),
-                    _ => print!("{}", tle.neighbor_mines)
+                let is_target: bool = tle.position == target_tile.position;
+                if is_target {
+                    print!("{{");
+                } else {
+                    print!("[");
                 }
 
-                if is_target { print!("}}"); }
-                else { print!("]"); }
+                print!("{}", tle);
+
+                if is_target {
+                    print!("}}");
+                } else {
+                    print!("]");
+                }
             }
             println!();
         }
     }
 
-    pub fn reveal_tile(&mut self, y: usize, x: usize) -> () {
-        if y >= self.height || x >= self.width { return; }
+    pub fn reveal_tile(&mut self, y: usize, x: usize) {
+        if y >= self.height || x >= self.width {
+            return;
+        }
         todo!();
     }
 
-
-    fn calculate_tile_counts(&mut self) {
-        let width = self.width;
-        let height = self.height;
-        for i in 0..self.width {
-            for j in 0..self.height {
-                let tle = self.tile_at(j, i);
-                if tle.has_mine { self.mut_tile_at(j, i).neighbor_mines = -2; continue; }
-                for k in -1..=1 {
-                    for l in -1..=1 {
-                        if k == 0 && l == 0 { continue; }
-                        let (mut x, mut y) = (tle.x as i32, tle.y as i32);
-                        x += k;
-                        y += l;
-
-                        if x < 0 || x >= width as i32 || y < 0 || y >= height as i32 { continue; }
-
-                        if self.tile_at(x as usize, y as usize).has_mine { self.mut_tile_at(tle.x as usize, tle.y as usize).neighbor_mines += 1; }
-                        self.highlight_print_field(tle);
-                        println!();
-                        std::io::stdout().flush();
-                    }
-                }
+    fn count_neighbor_mines(&self, tile_pos: Position) -> u8 {
+        let mut count = 0;
+        for pos in tile_pos.iter_around(1) {
+            if self
+                .try_tile_at(pos)
+                .map(|neighbor| neighbor.has_mine())
+                .unwrap_or(false)
+            {
+                count += 1;
+            }
+        }
+        count
+    }
+    fn update_tile_counts(&mut self) {
+        for pos in Position::iter_2d(self.width, self.height) {
+            // FIXME: the borrow checker doesn't like us calling count_neighbor_mines inside the if statement, so we inefficiently calculate it for all tiles.
+            let count = self.count_neighbor_mines(pos);
+            if let Some(neighbor_mines) = self.mut_tile_at(pos).try_mut_neighbor_mines() {
+                *neighbor_mines = count;
             }
         }
     }
 
-    fn mut_tile_at(&mut self, x: usize, y: usize) -> &mut tile::Tile {
-        &mut self.minefield[y][x]
+    fn try_tile_at(&self, Position { x, y }: Position) -> Option<&Tile> {
+        self.minefield.get(y).and_then(|row| row.get(x))
+    }
+    fn try_mut_tile_at(&mut self, Position { x, y }: Position) -> Option<&mut Tile> {
+        self.minefield.get_mut(y).and_then(|row| row.get_mut(x))
     }
 
-    fn tile_at(& self, x: usize, y: usize) -> tile::Tile {
-        self.minefield[y][x]
+    fn mut_tile_at(&mut self, pos: Position) -> &mut Tile {
+        self.try_mut_tile_at(pos).expect("Tile out of range")
+    }
+    fn tile_at(&self, pos: Position) -> &Tile {
+        self.try_tile_at(pos).expect("Tile out of range")
     }
 }
