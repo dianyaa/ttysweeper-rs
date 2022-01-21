@@ -18,3 +18,15 @@ impl Tile {
         }
     }
 }
+
+use std::fmt::{self, Display, Formatter};
+
+impl Display for Tile {
+    fn fmt(&self, formatter: &mut Formatter) -> fmt::Result {
+        match self.neighbor_mines {
+            -2 => write!(formatter, "*"),
+            0 => write!(formatter, " "),
+            neighbor_mines => write!(formatter, "{}", neighbor_mines),
+        }
+    }
+}

@@ -51,15 +51,7 @@ impl Field {
     pub fn print_field(&self) {
         for row in &self.minefield {
             for tle in row {
-                print!("[");
-
-                match tle.neighbor_mines {
-                    -2 => print!("*"),
-                    0 => print!(" "),
-                    _ => print!("{}", tle.neighbor_mines),
-                }
-
-                print!("]");
+                print!("[{}]", tle);
             }
             println!();
         }
@@ -75,11 +67,7 @@ impl Field {
                     print!("[");
                 }
 
-                match tle.neighbor_mines {
-                    -2 => print!("*"),
-                    0 => print!(" "),
-                    _ => print!("{}", tle.neighbor_mines),
-                }
+                print!("{}", tle);
 
                 if is_target {
                     print!("}}");
