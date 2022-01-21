@@ -14,7 +14,7 @@ pub struct Field {
 
 impl Field {
     pub fn new(height: usize, width: usize, num_mines: usize) -> Self {
-        Field {
+        Self {
             height,
             width,
             num_mines,

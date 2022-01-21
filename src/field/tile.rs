@@ -9,7 +9,7 @@ pub struct Tile {
 
 impl Tile {
     pub fn new(has_mine: bool, x: usize, y: usize) -> Self {
-        Tile {
+        Self {
             has_mine,
             display: -1,
             neighbor_mines: 0,
