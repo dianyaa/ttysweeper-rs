@@ -1,9 +1,10 @@
+use crate::util::Position;
+
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct Tile {
     pub is_showing: bool,
     pub kind: TileKind,
-    pub x: usize,
-    pub y: usize,
+    pub position: Position,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -13,20 +14,18 @@ pub enum TileKind {
 }
 
 impl Tile {
-    pub fn new_mine(x: usize, y: usize) -> Self {
+    pub fn new_mine(position: Position) -> Self {
         Self {
             is_showing: false,
             kind: TileKind::Mine,
-            x,
-            y,
+            position,
         }
     }
-    pub fn new_non_mine(x: usize, y: usize, neighbor_mines: u8) -> Self {
+    pub fn new_non_mine(position: Position, neighbor_mines: u8) -> Self {
         Self {
             is_showing: false,
             kind: TileKind::NotMine { neighbor_mines },
-            x,
-            y,
+            position,
         }
     }
 
